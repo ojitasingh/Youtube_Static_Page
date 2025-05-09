@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bollywood Music - Static YouTube Desktop Version</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  body, html {
+    height: 100%;
+    background: #121212;
+    color: #eee;
+    overflow: hidden;
+  }
+  /* Container for entire page */
+  .app-container {
+    max-width: 1200px;
+    height: 100vh;
+    margin: 0 auto;
+    border: 1px solid #333;
+    background: #181818;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Header */
+  header {
+    height: 60px;
+    background: #ff2e63;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    color: white;
+    font-weight: 700;
+    font-size: 24px;
+    position: relative;
+  }
+  header .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+  header .logo svg {
+    fill: white;
+    width: 36px;
+    height: 28px;
+  }
+  header .search-container {
+    flex: 1;
+    margin: 0 20px;
+    position: relative;
+  }
+  header input[type="search"] {
+    width: 100%;
+    padding: 8px 40px 8px 15px;
+    border-radius: 4px;
+    border: none;
+    font-size: 16px;
+  }
+  header .search-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    fill: #888;
+    width: 24px;
+    height: 24px;
+  }
+  header .user-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #ff2e63cc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  header .user-icon svg {
+    fill: white;
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Main content layout */
+  .content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+  /* Sidebar */
+  .sidebar {
+    width: 200px;
+    background: #222;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    border-right: 1px solid #333;
+  }
+  .sidebar button {
+    background: none;
+    border: none;
+    color: #bbb;
+    font-size: 16px;
+    padding: 14px 20px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    outline-offset: 3px;
+  }
+  .sidebar button:hover, .sidebar button.active {
+    color: #ff2e63;
+    background-color: #330014;
+  }
+  .sidebar button svg {
+    fill: currentColor;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+  .sidebar button .label-text {
+    flex-grow: 1;
+  }
+
+  /* Video grid list */
+  .video-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    background: #181818;
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+  .video-card {
+    background: #222;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.3s ease;
+    outline-offset: 2px;
+  }
+  .video-card:hover {
+    background: #ff2e63cc;
+  }
+  .video-card:focus-visible {
+    outline: 2px solid #ff2e63;
+    background: #330014;
+  }
+  .thumbnail {
+    width: 100%;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .thumbnail img {
+    width: 100%;
+    display: block;
+    border-radius: 8px 8px 0 0;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .video-card:hover .thumbnail img {
+    transform: scale(1.1);
+  }
+  .play-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 64px;
+    height: 64px;
+    transform: translate(-50%, -50%);
+    fill: white;
+    opacity: 0.85;
+    pointer-events: none;
+    filter: drop-shadow(0 0 4px rgba(0,0,0,0.7));
+  }
+  .video-info {
+    padding: 14px 14px 18px 14px;
+    color: #ddd;
+  }
+  .video-info h4 {
+    font-size: 18px;
+    margin-bottom: 6px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .video-info p {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 4px;
+    user-select: none;
+  }
+
+  /* Video player modal */
+  .modal {
+    position: fixed;
+    z-index: 50;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  .modal-content {
+    width: 100%;
+    max-width: 900px;
+    max-height: 506px; /* keeping 16:9 aspect ratio */
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 20px #ff2e63aa;
+  }
+  .modal iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 10px;
+  }
+  .modal-close {
+    position: fixed;
+    top: 20px; right: 20px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    fill: white;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+    z-index: 60;
+  }
+  .modal-close:hover {
+    opacity: 1;
+  }
+
+  /* Scrollbar style for video list */
+  .video-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  .video-list::-webkit-scrollbar-thumb {
+    background-color: #ff2e63aa;
+    border-radius: 4px;
+  }
+  .video-list::-webkit-scrollbar-track {
+    background: #181818;
+  }
+
+  /* Accessibility and focus */
+  .video-card:focus {
+    outline: none;
+  }
+
+  /* Responsive fallback for smaller widths below 960px */
+  @media (max-width: 960px) {
+    .app-container {
+      max-width: 100vw;
+      border: none;
+    }
+    .sidebar {
+      width: 140px;
+      padding: 14px 0;
+    }
+    header {
+      font-size: 20px;
+      padding: 0 12px;
+    }
+    .video-list {
+      padding: 16px 16px;
+      grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+      gap: 14px;
+    }
+    .video-info h4 {
+      font-size: 16px;
+    }
+  }
+  /* Smaller mobile fallback */
+  @media (max-width: 480px) {
+    .content {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 100%;
+      flex-direction: row;
+      border-right: none;
+      border-bottom: 1px solid #333;
+      padding: 8px 0;
+      overflow-x: auto;
+    }
+    .sidebar button {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      font-size: 14px;
+      gap: 8px;
+    }
+    .video-list {
+      padding: 10px 10px;
+      grid-template-columns: repeat(auto-fill,minmax(160px,1fr));
+      gap: 10px;
+      height: calc(100vh - 122px);
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="app-container" role="main" aria-label="Bollywood Music YouTube Static Page Desktop Version">
+    <header>
+      <div class="logo" aria-label="Bollywood Music Logo">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2L2 6v8l8 4 8-4V6l-8-4z"></path></svg>
+        Bollywood Music
+      </div>
+      <div class="search-container">
+        <input type="search" id="searchInput" placeholder="Search Bollywood music..." aria-label="Search videos" />
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.53 20.47l-5.73-5.73A7.92 7.92 0 0016 10a8 8 0 10-8 8 7.92 7.92 0 004.74-1.2l5.73 5.73a.75.75 0 001.06-1.06zM10 16a6 6 0 110-12 6 6 0 010 12z"/></svg>
+      </div>
+      <div class="user-icon" aria-label="User account" tabindex="0">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </div>
+    </header>
+    <div class="content">
+      <nav class="sidebar" aria-label="Main menu">
+        <button class="active" aria-pressed="true" tabindex="0" aria-label="Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span class="label-text">Home</span>
+        </button>
+        <button aria-label="Trending" tabindex="0">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6l2.29 2.29-4.88 4.88-2.88-2.88L2 18.29 3.41 19.7 10.41 12.7l2.88 2.88 6.17-6.17L22 10V6z"/></svg>
+          <span class="label-text">Trending</span>
+        </button>
+        <button aria-label="Subscriptions" tabindex="0">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6H4v12h16V6zm-6 8h-4v-4h4v4z"/></svg>
+          <span class="label-text">Subscriptions</span>
+        </button>
+      </nav>
+      <section class="video-list" aria-label="Video list" id="videoList" tabindex="0">
+        <!-- Video cards injected by JS -->
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal for video player -->
+  <div id="modal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <iframe id="videoPlayer" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="Video player"></iframe>
+    </div>
+    <svg class="modal-close" id="closeModal" aria-label="Close video player" role="button" tabindex="0" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+  </div>
+
+<script>
+  const videos = [
+    {
+      id: 'sDpghr2XIAw', // "Jai Ho" from Slumdog Millionaire
+      title: 'Jai Ho - A.R. Rahman',
+      channel: 'T-Series',
+      views: '1.2B views',
+      uploaded: '10 years ago',
+      thumbnail: 'jai ho thumbnail.jpg'
+    },{
+      id: 'BHZsXtQpaUQ', // "Tum Hi Ho" from Aashiqui 2
+      title: 'Tum Hi Ho - Arijit Singh',
+      channel: 'Sony Music India',
+      views: '850M views',
+      uploaded: '9 years ago',
+      thumbnail: 'tum hi ho thumbnail.jpg'
+    },{
+      id: 'dYAbGE6MBWc', // "Kala Chashma" from Baar Baar Dekho
+      title: 'Kala Chashma - Neha Kakkar',
+      channel: 'Sony Music India',
+      views: '650M views',
+      uploaded: '5 years ago',
+      thumbnail: 'kala chashma thumbnail.jpeg'
+    },{
+      id: '2xZPN9LngvY', // "Dil Dhadakne Do" Title Track
+      title: 'Dil Dhadakne Do - Priyanka Chopra',
+      channel: 'YRF',
+      views: '180M views',
+      uploaded: '6 years ago',
+      thumbnail: 'dil dhadakne do thumbnail.jpeg'
+    },{
+      id: 'XKFOl1gpdn4', // "Gallan Goodiyan" from Dil Dhadakne Do
+      title: 'Gallan Goodiyan - Shankar Ehsaan Loy',
+      channel: 'YRF',
+      views: '140M views',
+      uploaded: '7 years ago',
+      thumbnail: 'gallan goodiyan thumbnail.jpg'
+    },{
+      id: 'zo5uh6sQ6S4', // "Kabira" from Yeh Jawaani Hai Deewani
+      title: 'Kabira - Arijit Singh',
+      channel: 'T-Series',
+      views: '275M views',
+      uploaded: '8 years ago',
+      thumbnail: 'kabira thumbnail.jpg'
+    }
+  ];
+
+  // DOM Elements
+  const videoList = document.getElementById('videoList');
+  const searchInput = document.getElementById('searchInput');
+  const modal = document.getElementById('modal');
+  const videoPlayer = document.getElementById('videoPlayer');
+  const closeModalBtn = document.getElementById('closeModal');
+
+  // Render videos to page, filtered by search
+  function renderVideos(filter = '') {
+    const filterLower = filter.toLowerCase();
+    let html = '';
+    const filtered = videos.filter(video =>
+      video.title.toLowerCase().includes(filterLower) ||
+      video.channel.toLowerCase().includes(filterLower)
+    );
+
+    if(filtered.length === 0) {
+      html = '<p style="color:#ff2e63; text-align:center; margin-top:20px;">No videos found.</p>';
+    } else {
+      filtered.forEach(video => {
+        html += `
+          <article class="video-card" tabindex="0" role="button" aria-pressed="false" aria-label="Play ${video.title} by ${video.channel}">
+            <div class="thumbnail">
+              <img src="${video.thumbnail}" alt="Thumbnail of ${video.title}" loading="lazy" />
+              <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div class="video-info">
+              <h4>${video.title}</h4>
+              <p>${video.channel}</p>
+              <p>${video.views} • ${video.uploaded}</p>
+            </div>
+          </article>
+        `;
+      });
+    }
+    videoList.innerHTML = html;
+
+    // Add click/keyboard listeners to each card to open modal
+    const cards = document.querySelectorAll('.video-card');
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = Array.from(cards).indexOf(card);
+        openModal(filtered[idx].id);
+      });
+      card.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const idx = Array.from(cards).indexOf(card);
+          openModal(filtered[idx].id);
+        }
+      });
+    });
+  }
+
+  // Open modal with video
+  function openModal(videoId) {
+    videoPlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    modal.style.display = 'flex';
+    modal.focus();
+  }
+  // Close modal and stop video
+  function closeModal() {
+    videoPlayer.src = '';
+    modal.style.display = 'none';
+  }
+
+  // Search input handler
+  searchInput.addEventListener('input', (e) => {
+    renderVideos(e.target.value);
+  });
+
+  // Close modal events
+  closeModalBtn.addEventListener('click', closeModal);
+  closeModalBtn.addEventListener('keydown', e => {
+    if(e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      closeModal();
+    }
+  });
+  modal.addEventListener('click', e => {
+    if(e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Initial render
+  renderVideos();
+
+</script>
+</body>
+</html>
+</content>
+</create_file>
